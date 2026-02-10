@@ -33,3 +33,15 @@ button {
     background-color: lightseagreen;
     color: white;
 }
+.column.disabled {
+    background-color: #f0f0f0;
+    opacity: 0.6;
+    pointer-events: none;
+    filter: grayscale(0.5);
+    transition: all 0.3s ease;
+}
+
+.column.disabled .card {
+    box-shadow: none;
+    border-color: #ccc;
+}

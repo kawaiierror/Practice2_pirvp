@@ -1,29 +1,28 @@
 Vue.component('note-card', {
-    props: ['card'],
+    props: ['card', 'isBlocked'],
     template: `
         <div class="card">
-            <input type="text" v-model="card.title" placeholder="Заголовок карточки" />
+            <input type="text" v-model="card.title" :disabled="isBlocked" placeholder="Заголовок карточки" />
             <ul>
                 <li v-for="(item, itemIndex) in card.items" :key="itemIndex">
-                    <input type="checkbox" v-model="item.completed" @change="updateCard">
-                    <input type="text" v-model="item.text" placeholder="Пункт списка" />
+                    <input type="checkbox" v-model="item.completed" @change="updateCard" :disabled="isBlocked">
+                    <input type="text" v-model="item.text" :disabled="isBlocked" placeholder="Пункт списка" />
                 </li>
             </ul>
-            <input type="text" v-model="newItemText" placeholder="Новый пункт списка" />
-            <button @click="addItem" :disabled="itemCount >= 5">Добавить пункт</button>
-            <p v-if="card.completedDate">Завершено: {{ card.completedDate }}</p>
-            <button @click="removeCard(card.id)" >Удалить</button>
+            <input type="text" v-model="newItemText" :disabled="isBlocked || itemCount >= 5" placeholder="Новый пункт списка" />
+            <button @click="addItem" :disabled="isBlocked || itemCount >= 5">Добавить пункт</button>
+            <p v-if="card.completedDate">Завершено: <br> {{ card.completedDate }}</p>
+            <button @click="removeCard(card.id)" :disabled="isBlocked">Удалить</button>
         </div>
     `,
     data() {
         return {
-            newItemText: '', // Переменная для хранения текста нового пункта
+            newItemText: '',
         };
     },
-
     computed: {
         itemCount() {
-            return this.card.items.length; // Количество пунктов в карточке
+            return this.card.items.length;
         }
     },
     methods: {
@@ -35,27 +34,31 @@ Vue.component('note-card', {
         },
         addItem() {
             if (this.newItemText.trim() !== '' && this.itemCount < 5) {
-                this.card.items.push({text: this.newItemText, completed: false}); // Добавляем новый пункт
-                this.newItemText = ''; // Очищаем поле ввода
-                this.updateCard(); // Обновляем карточку
+                this.card.items.push({text: this.newItemText, completed: false});
+                this.newItemText = '';
+                this.updateCard();
             }
         }
     }
 });
 
 Vue.component('note-column', {
-    props: ['column'],
+    props: ['column', 'isBlocked'],
     template: `
-        <div class="column">
+        <div class="column" :class="{ disabled: isBlocked }">
             <h2>{{ column.title }}</h2>
             <note-card
                 v-for="(card, cardIndex) in column.cards"
+                :is-blocked="isBlocked" 
                 :key="card.id"
                 :card="card"
                 @remove-card="$emit('remove-card', $event)"
                 @update-card="$emit('update-card', $event)"
             ></note-card>
-            <button v-if="checkForAddCard(column)" @click="$emit('add-card', column)">Добавить карточку</button>
+            <button v-if="column.title === 'Столбец 1' && !isBlocked && checkForAddCard(column)" 
+                    @click="$emit('add-card', column)">
+                Добавить карточку
+            </button>
         </div>
     `,
     methods: {
@@ -80,6 +83,21 @@ Vue.component('note-app', {
     },
     created() {
         this.loadCards();
+    },
+    computed: {
+        isFirstColumnBlocked() {
+            const col1 = this.columns[0];
+            const col2 = this.columns[1];
+
+            const col2Full = col2.cards.length >= 5;
+
+            const hasHighProgressCard = col1.cards.some(card => {
+                const completed = card.items.filter(i => i.completed).length;
+                return (completed / card.items.length) > 0.5;
+            });
+
+            return col2Full && hasHighProgressCard;
+        }
     },
     methods: {
         loadCards() {
@@ -119,17 +137,21 @@ Vue.component('note-app', {
         updateCard(card) {
             const completedItems = card.items.filter(item => item.completed).length;
             const totalItems = card.items.length;
+            if (totalItems === 0) return;
 
-            if (totalItems > 0) {
-                const completionRate = completedItems / totalItems;
+            const completionRate = completedItems / totalItems;
 
-                if (completionRate > 0.5 && this.columns[0].cards.includes(card)) {
+            if (completionRate > 0.5 && this.columns[0].cards.includes(card)) {
+                if (this.columns[1].cards.length < 5) {
                     this.moveCard(card, 1);
-                } else if (completionRate === 1 && this.columns[1].cards.includes(card)) {
-                    this.moveCard(card, 2);
-                    card.completedDate = new Date().toLocaleString();
                 }
+
             }
+            else if (completionRate === 1 && this.columns[1].cards.includes(card)) {
+                card.completedDate = new Date().toLocaleString();
+                this.moveCard(card, 2);
+            }
+
             this.saveCards();
         },
         moveCard(card, targetColumnIndex) {
@@ -148,6 +170,7 @@ Vue.component('note-app', {
             <div class="columns">
                 <note-column
                     v-for="(column, index) in columns"
+                    :is-blocked="index === 0 && isFirstColumnBlocked" 
                     :key="index"
                     :column="column"
                     @remove-card="removeCard"
