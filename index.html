@@ -12,31 +12,36 @@
 </head>
 <body>
     <div id="app">
-
-        <div class="column" v-for="(column, index) in columns" :key="index">
-            <h2>Столбец {{ index + 1 }}</h2>
-
-            <div v-if="!isColumnLocked(index)">
-
-                <div class="card" v-for="(card, cardIndex) in column.cards" :key="cardIndex">
-                    <h3>{{ card.title }}</h3>
+        <div class="columns">
+            <div class="column" v-for="(column, index) in columns" :key="index">
+                <h2>{{ column.title }}</h2>
+                <div class="card" v-for="(card, cardIndex) in column.cards" :key="card.id" :style="{ backgroundColor: card.color }">
+                    <input type="text" v-model="card.title" placeholder="Заголовок карточки" />
+                    <label for="colorPicker">Выберите цвет:</label>
+                    <input type="color" v-model="card.color" />
 
                     <ul>
                         <li v-for="(item, itemIndex) in card.items" :key="itemIndex">
                             <input type="checkbox" v-model="item.completed" @change="updateCard(card)">
-                            <span :class="{ completed: item.completed }">{{ item.text }}</span>
+                            <input type="text" v-model="item.text" placeholder="Пункт списка" />
                         </li>
                     </ul>
-                    <button @click="removeCard(index, cardIndex)">Удалить карточку</button>
+                    <button @click="removeCard(card.id)">Удалить</button>
+                    <p v-if="card.completedDate">Завершено: {{ card.completedDate }}</p>
+                    <div>
+
+                        <label for="tags">Добавить метки:</label>
+                        <input type="text" v-model="card.tag" placeholder="Введите метку" @keyup.enter="addTag(card)" />
+                        <ul>
+                            <li v-for="(tag, tagIndex) in card.tags" :key="tagIndex">{{ tag }}</li>
+                        </ul>
+
+                    </div>
                 </div>
                 <button v-if="checkForAddCard(index)" @click="addCard(index)">Добавить карточку</button>
             </div>
 
-            <p v-if="isColumnLocked(index)">Столбец заблокирован для редактирования</p>
-
         </div>
-
-        <div class="clear"></div>
 
     </div>
 </body>

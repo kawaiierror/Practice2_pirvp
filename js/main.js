@@ -1,86 +1,92 @@
 new Vue({
     el: '#app',
-    data: {
-        columns: [
-            { cards: [] },
-            { cards: [] },
-            { cards: [] }
-        ]
+    data() {
+        return {
+            coluns: [
+                { title: 'Столбец 1', cards: [] },
+                { title: 'Столбец 2', cards: [] },
+                { title: 'Столбец 3', cards: [] }
+            ],
+            nextCardId: 1
+        };
     },
     created() {
-        this.loadData();
+        this.loadCards();
     },
     methods: {
-        addCard(columnIndex) {
-            const title = prompt("Введите заголовок для карточки:");
-            if (title) {
-                const items = [];
-                for (let i = 0; i < 3; i++) {
-                    const itemText = prompt(`Введите текст пункта ${i + 1}:`);
-                    if (itemText) {
-                        items.push({ text: itemText, completed: false });
-                    }
-                }
-                this.columns[columnIndex].cards.push({ title, items });
-                this.saveData();
+        loadCards() {
+            const savedData = JSON.parse(localStorage.getItem('cards'));
+            if (savedData) {
+                this.columns = savedData.columns;
+                this.nextCardId = savedData.nextCardId;
             }
         },
-        removeCard(columnIndex, cardIndex) {
-            this.columns[columnIndex].cards.splice(cardIndex, 1);
-            this.saveData();
+        saveCards() {
+            localStorage.setItem('cards', JSON.stringify({ columns: this.columns, nextCardId: this.nextCardId }));
+        },
+        checkForAddCard(column) {
+            if (column.title === 'Столбец 1' && column.cards.length >= 3) return false;
+            if (column.title === 'Столбец 2' && column.cards.length >= 5) return false;
+            return true;
+        },
+        addCard(columnIndex) {
+            const newCard = {
+                id: this.nextCardId++,
+                title: `Карточка ${this.nextCardId}`,
+                color: '#f9f9 f9', // Цвет по умолчанию
+                items: [
+                    { text: 'Пункт 1', completed: false },
+                    { text: 'Пункт 2', completed: false },
+                    { text: 'Пункт 3', completed: false }
+                ],
+                completedDate: null,
+                tags: [], // Массив для хранения меток
+                tag: '' // Временное поле для ввода метки
+            };
+            this.columns[columnIndex].cards.push(newCard);
+            this.saveCards();
+        },
+        removeCard(cardId) {
+            for (let column of this.columns) {
+                const index = column.cards.findIndex(card => card.id === cardId);
+                if (index !== -1) {
+                    column.cards.splice(index, 1);
+                    this.saveCards();
+                    break;
+                }
+            }
         },
         updateCard(card) {
-            const totalItems = card.items.length;
             const completedItems = card.items.filter(item => item.completed).length;
+            const totalItems = card.items.length;
 
-            if (completedItems > 0.5 * totalItems) {
+            if (totalItems > 0) {
+                const completionRate = completedItems / totalItems;
 
-                if (this.columns[0].cards.includes(card)) {
-                    this.moveCardToColumn(card, 1);
-
-                } else if (completedItems === totalItems) {
-                    this.moveCardToColumn(card, 2);
-                    card.completedAt = new Date().toLocaleString();
+                if (completionRate > 0.5 && this.columns[0].cards.includes(card)) {
+                    this.moveCard(card, 1); // Перемещение во второй столбец
+                } else if (completionRate === 1 && this.columns[1].cards.includes(card)) {
+                    this.moveCard(card, 2); // Перемещение в третий столбец
+                    card.completedDate = new Date().toLocaleString(); // Установка даты завершения
                 }
             }
-            this.saveData();
+            this.saveCards();
         },
-
-        moveCardToColumn(card, targetColumnIndex) {
-            const sourceColumnIndex = this.columns.findIndex(column => column.cards.includes(card));
-            this.columns[sourceColumnIndex].cards.splice(this.columns[sourceColumnIndex].cards.indexOf(card), 1);
-            this.columns[targetColumnIndex].cards.push(card);
-        },
-
-        isColumnLocked(index) {
-            if (index === 0) {
-                return this.columns[1].cards.length >= 5 && this.columns[0].cards.some(card => {
-                    const totalItems = card.items.length;
-                    const completedItems = card.items.filter(item => item.completed).length;
-                    return completedItems > 0.5 * totalItems;
-                });
+        moveCard(card, targetColumnIndex) {
+            for (let column of this.columns) {
+                const index = column.cards.findIndex(c => c.id === card.id);
+                if (index !== -1) {
+                    column.cards.splice(index, 1); // Удаление из текущего столбца
+                    this.columns[targetColumnIndex].cards.push(card); // Добавление в целевой столбец
+                    break;
+                }
             }
-            return false;
         },
-
-        checkForAddCard(index) {
-            if (index === 0) {
-                return this.columns[0].cards.length < 3;
-            } else if (index === 1) {
-                return this.columns[1].cards.length < 5;
-            }
-            return true; // В третьем столбце нет ограничений
-        },
-
-        saveData() {
-            localStorage.setItem('noteAppData', JSON.stringify(this.columns));
-        },
-
-        loadData() {
-            const data = localStorage.getItem('noteAppData');
-
-            if (data) {
-                this.columns = JSON.parse(data);
+        addTag(card) {
+            if (card.tag.trim() !== '') {
+                card.tags.push(card.tag.trim());
+                card.tag = ''; // Очистка поля ввода метки
+                this.saveCards();
             }
         }
     }

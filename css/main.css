@@ -2,12 +2,18 @@
     float: left;
     width: 30%;
     padding: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid lightgray;
+
+    border-radius: 5px;
+
     margin-right: 10px;
 }
 
 .card {
-    border: 1px solid #000;
+    border: 1px solid lightgray;
+
+    border-radius: 5px;
+
     margin-bottom: 10px;
     padding: 10px;
 }
