@@ -2,7 +2,7 @@ new Vue({
     el: '#app',
     data() {
         return {
-            coluns: [
+            columns: [
                 { title: 'Столбец 1', cards: [] },
                 { title: 'Столбец 2', cards: [] },
                 { title: 'Столбец 3', cards: [] }
@@ -33,7 +33,6 @@ new Vue({
             const newCard = {
                 id: this.nextCardId++,
                 title: `Карточка ${this.nextCardId}`,
-                color: '#f9f9 f9', // Цвет по умолчанию
                 items: [
                     { text: 'Пункт 1', completed: false },
                     { text: 'Пункт 2', completed: false },

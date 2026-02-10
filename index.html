@@ -15,10 +15,8 @@
         <div class="columns">
             <div class="column" v-for="(column, index) in columns" :key="index">
                 <h2>{{ column.title }}</h2>
-                <div class="card" v-for="(card, cardIndex) in column.cards" :key="card.id" :style="{ backgroundColor: card.color }">
+                <div class="card" v-for="(card, cardIndex) in column.cards" :key="card.id">
                     <input type="text" v-model="card.title" placeholder="Заголовок карточки" />
-                    <label for="colorPicker">Выберите цвет:</label>
-                    <input type="color" v-model="card.color" />
 
                     <ul>
                         <li v-for="(item, itemIndex) in card.items" :key="itemIndex">
@@ -26,7 +24,6 @@
                             <input type="text" v-model="item.text" placeholder="Пункт списка" />
                         </li>
                     </ul>
-                    <button @click="removeCard(card.id)">Удалить</button>
                     <p v-if="card.completedDate">Завершено: {{ card.completedDate }}</p>
                     <div>
 
@@ -37,6 +34,7 @@
                         </ul>
 
                     </div>
+                    <button @click="removeCard(card.id)">Удалить</button>
                 </div>
                 <button v-if="checkForAddCard(index)" @click="addCard(index)">Добавить карточку</button>
             </div>
