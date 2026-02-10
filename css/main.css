@@ -24,6 +24,12 @@
 }
 
 button {
+    padding: 7px;
+
+    border-radius: 5px;
+
+    border: 1px solid lightseagreen;
+
     background-color: lightseagreen;
     color: white;
 }

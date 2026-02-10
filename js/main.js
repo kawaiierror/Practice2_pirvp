@@ -1,35 +1,30 @@
-ue.component('note-card', {
+Vue.component('note-card', {
     props: ['card'],
     template: `
-        <div class="card" :style="{ backgroundColor: card.color }">
+        <div class="card">
             <input type="text" v-model="card.title" placeholder="Заголовок карточки" />
-            <label for="colorInput">Цвет:</label>
-            <input type="color" v-model="card.color" />
             <ul>
                 <li v-for="(item, itemIndex) in card.items" :key="itemIndex">
                     <input type="checkbox" v-model="item.completed" @change="updateCard">
                     <input type="text" v-model="item.text" placeholder="Пункт списка" />
                 </li>
             </ul>
-            <button @click="removeCard(card.id)">Удалить</button>
             <p v-if="card.completedDate">Завершено: {{ card.completedDate }}</p>
+            <button @click="removeCard(card.id)">Удалить</button>
         </div>
     `,
     methods: {
-        // Метод для удаления карточки
         removeCard(cardId) {
-            this.$emit('remove-card', cardId); // Генерируем событие для удаления карточки
+            this.$emit('remove-card', cardId);
         },
-        // Метод для обновления карточки
         updateCard() {
-            this.$emit('update-card', this.card); // Генерируем событие для обновления карточки
+            this.$emit('update-card', this.card);
         }
     }
 });
 
-// Компонент колонки заметок
 Vue.component('note-column', {
-    props: ['column'], // Принимаем объект колонки как пропс
+    props: ['column'],
     template: `
         <div class="column">
             <h2>{{ column.title }}</h2>
@@ -44,95 +39,86 @@ Vue.component('note-column', {
         </div>
     `,
     methods: {
-        // Метод для проверки, можно ли добавить карточку в колонку
         checkForAddCard(column) {
-            if (column.title === 'Столбец 1' && column.cards.length >= 3) return false; // Ограничение на 3 карточки
-            if (column.title === 'Столбец 2' && column.cards.length >= 5) return false; // Ограничение на 5 карточек
-            return true; // Если нет ограничений, возвращаем true
+            if (column.title === 'Столбец 1' && column.cards.length >= 3) return false;
+            if (column.title === 'Столбец 2' && column.cards.length >= 5) return false;
+            return true;
         }
     }
 });
 
-// Главный компонент приложения заметок
 Vue.component('note-app', {
     data() {
         return {
             columns: [
-                { title: 'Столбец 1', cards: [] }, // Первая колонка
-                { title: 'Столбец 2', cards: [] }, // Вторая колонка
-                { title: 'Столбец 3', cards: [] }  // Третья колонка
+                { title: 'Столбец 1', cards: [] },
+                { title: 'Столбец 2', cards: [] },
+                { title: 'Столбец 3', cards: [] }
             ],
-            nextCardId: 1 // Идентификатор для следующей карточки
+            nextCardId: 1
         };
     },
     created() {
-        this.loadCards(); // Загружаем карточки из localStorage при создании компонента
+        this.loadCards();
     },
     methods: {
-        // Метод для загрузки карточек из localStorage
         loadCards() {
             const savedData = JSON.parse(localStorage.getItem('cards'));
             if (savedData) {
-                this.columns = savedData.columns; // Загружаем колонки
-                this.nextCardId = savedData.nextCardId; // Загружаем следующий ID карточки
+                this.columns = savedData.columns;
+                this.nextCardId = savedData.nextCardId;
             }
         },
-        // Метод для сохранения карточек в localStorage
         saveCards() {
             localStorage.setItem('cards', JSON.stringify({ columns: this.columns, nextCardId: this.nextCardId }));
         },
-        // Метод для добавления новой карточки в колонку
         addCard(column) {
             const newCard = {
-                id: this.nextCardId++, // Увеличиваем ID для новой карточки
-                title: `Карточка ${this.nextCardId}`, // Заголовок карточки
-                color: '#f9f9f9', // Цвет по умолчанию
+                id: this.nextCardId++,
+                title: `Карточка ${this.nextCardId}`,
                 items: [
                     { text: 'Пункт 1', completed: false },
                     { text: 'Пункт 2', completed: false },
                     { text: 'Пункт 3', completed: false }
                 ],
-                completedDate: null // Дата завершения по умолчанию
+                completedDate: null
             };
-            column.cards.push(newCard); // Добавляем новую карточку в колонку
-            this.saveCards(); // Сохраняем изменения в localStorage
+            column.cards.push(newCard);
+            this.saveCards();
         },
-        // Метод для удаления карточки по ID
         removeCard(cardId) {
             for (let column of this.columns) {
-                const index = column.cards.findIndex(card => card.id === cardId); // Находим индекс карточки
+                const index = column.cards.findIndex(card => card.id === cardId);
                 if (index !== -1) {
-                    column.cards.splice(index, 1); // Удаляем карточку из колонки
-                    this.saveCards(); // Сохраняем изменения в localStorage
-                    break; // Выходим из цикла после удаления
+                    column.cards.splice(index, 1);
+                    this.saveCards();
+                    break;
                 }
             }
         },
-        // Метод для обновления состояния карточки
         updateCard(card) {
-            const completedItems = card.items.filter(item => item.completed).length; // Считаем завершенные пункты
-            const totalItems = card.items.length; // Общее количество пунктов
+            const completedItems = card.items.filter(item => item.completed).length;
+            const totalItems = card.items.length;
 
             if (totalItems > 0) {
-                const completionRate = completedItems / totalItems; // Рассчитываем процент завершения
+                const completionRate = completedItems / totalItems;
 
                 if (completionRate > 0.5 && this.columns[0].cards.includes(card)) {
-                    this.moveCard(card, 1); // Перемещаем карточку во второй столбец
+                    this.moveCard(card, 1);
                 } else if (completionRate === 1 && this.columns[1].cards.includes(card)) {
-                    this.moveCard(card, 2); // Перемещаем карточку в третий столбец
-                    card.completedDate = new Date().toLocaleString(); // Устанавливаем дату завершения
+                    this.moveCard(card, 2);
+                    card.completedDate = new Date().toLocaleString();
                 }
             }
-            this.saveCards(); // Сохраняем изменения в localStorage
+            this.saveCards();
         },
-        // Метод для перемещения карточки между колонками
         moveCard(card, targetColumnIndex) {
             for (let column of this.columns) {
-                const index = column.cards.findIndex(c => c.id === card.id); // Находим индекс карточки.
+                const index = column.cards.findIndex(c => c.id === card.id);
                 if (index !== -1) {
-                    column.cards.splice(index, 1); // Удаляем карточку из текущей колонки
-                    this.columns[targetColumnIndex].cards.push(card); // Добавляем карточку в целевую колонку
-                    break; // Выходим из цикла после перемещения.
+                    column.cards.splice(index, 1);
+                    this.columns[targetColumnIndex].cards.push(card);
+                    break;
                 }
             }
         }

@@ -12,36 +12,7 @@
 </head>
 <body>
     <div id="app">
-<!--        <div class="columns">-->
-<!--            <div class="column" v-for="(column, index) in columns" :key="index">-->
-<!--                <h2>{{ column.title }}</h2>-->
-<!--                <div class="card" v-for="(card, cardIndex) in column.cards" :key="card.id">-->
-<!--                    <input type="text" v-model="card.title" placeholder="Заголовок карточки" />-->
-
-<!--                    <ul>-->
-<!--                        <li v-for="(item, itemIndex) in card.items" :key="itemIndex">-->
-<!--                            <input type="checkbox" v-model="item.completed" @change="updateCard(card)">-->
-<!--                            <input type="text" v-model="item.text" placeholder="Пункт списка" />-->
-<!--                        </li>-->
-<!--                    </ul>-->
-<!--                    <p v-if="card.completedDate">Завершено: {{ card.completedDate }}</p>-->
-<!--                    <div>-->
-
-<!--                        <label for="tags">Добавить метки:</label>-->
-<!--                        <input type="text" v-model="card.tag" placeholder="Введите метку" @keyup.enter="addTag(card)" />-->
-<!--                        <ul>-->
-<!--                            <li v-for="(tag, tagIndex) in card.tags" :key="tagIndex">{{ tag }}</li>-->
-<!--                        </ul>-->
-
-<!--                    </div>-->
-<!--                    <button @click="removeCard(card.id)">Удалить</button>-->
-<!--                </div>-->
-<!--                <button v-if="checkForAddCard(index)" @click="addCard(index)">Добавить карточку</button>-->
-<!--            </div>-->
-            <note-app></note-app>
-
-        </div>
-
+        <note-app></note-app>
     </div>
 </body>
 </html>
