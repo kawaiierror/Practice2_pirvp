@@ -22,7 +22,6 @@ new Vue({
                     }
                 }
                 this.columns[columnIndex].cards.push({ title, items });
-
                 this.saveData();
             }
         },
@@ -62,6 +61,15 @@ new Vue({
                 });
             }
             return false;
+        },
+
+        checkForAddCard(index) {
+            if (index === 0) {
+                return this.columns[0].cards.length < 3;
+            } else if (index === 1) {
+                return this.columns[1].cards.length < 5;
+            }
+            return true; // В третьем столбце нет ограничений
         },
 
         saveData() {
