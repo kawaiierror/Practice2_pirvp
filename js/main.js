@@ -187,6 +187,7 @@ Vue.component('note-app', {
     template: `
         <div>
 <!--            <img src="../img/Freddy.png" alt="fazber" v-if="isBlocked">-->
+                <img src="../img/Freddy.png" alt="fazber" v-if="isFirstColumnBlocked" style="width: 200px;">
             <div class="columns">
                 <note-column
                     v-for="(column, index) in columns"
