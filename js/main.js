@@ -10,7 +10,7 @@ Vue.component('note-card', {
                 </li>
             </ul>
             <input type="text" v-model="newItemText" :disabled="isBlocked || itemCount >= 5" placeholder="Новый пункт списка" />
-            <button @click="addItem" :disabled="isBlocked || itemCount >= 5">Добавить пункт</button>
+            <button v-if="!isBlocked" @click="addItem" :disabled="isBlocked || itemCount >= 5">Добавить пункт</button>
             <p v-if="card.completedDate">Завершено: <br> {{ card.completedDate }}</p>
         </div>
     `,
@@ -76,7 +76,7 @@ Vue.component('note-app', {
             nextCardId: 1
         };
     },
-    created() {
+    mounted() {
         this.loadCards();
     },
     computed: {
@@ -86,9 +86,18 @@ Vue.component('note-app', {
             const col2Full = col2.cards.length >= 5;
             const hasHighProgressCard = col1.cards.some(card => {
                 const completed = card.items.filter(i => i.completed).length;
-                return (completed / card.items.length) > 0.5;
+                return (completed / card.items.length) >= 0.5;
             });
             return col2Full && hasHighProgressCard;
+        }
+    },
+    watch: {
+        columns: {
+            handler(newColumns) {
+                this.checkProgress();
+                this.saveCards();
+            },
+            deep: true
         }
     },
     methods: {
@@ -117,41 +126,71 @@ Vue.component('note-app', {
             this.saveCards();
         },
         updateCard(card) {
-            const completedItems = card.items.filter(item => item.completed).length;
-            const totalItems = card.items.length;
-            if (totalItems === 0) return;
-
-            const completionRate = completedItems / totalItems;
-
-            if (completionRate > 0.5 && this.columns[0].cards.includes(card)) {
-                if (this.columns[1].cards.length < 5) {
-                    this.moveCard(card, 1);
-                }
-            }
-            else if (completionRate === 1 && this.columns[1].cards.includes(card)) {
-                card.completedDate = new Date().toLocaleString();
-                this.moveCard(card, 2);
-            }
-
-            this.saveCards();
+            // const completedItems = card.items.filter(item => item.completed).length;
+            // const totalItems = card.items.length;
+            // if (totalItems === 0) return;
+            //
+            // const completionRate = completedItems / totalItems;
+            //
+            // if (completionRate >= 0.5 && this.columns[0].cards.includes(card)) {
+            //     if (this.columns[1].cards.length < 5) {
+            //         this.moveCard(card, 1);
+            //     }
+            // }
+            // else if (completionRate === 1 && this.columns[1].cards.includes(card)) {
+            //     card.completedDate = new Date().toLocaleString();
+            //     this.moveCard(card, 2);
+            // }
+            //
+            // this.saveCards();
         },
         moveCard(card, targetColumnIndex) {
-            for (let column of this.columns) {
-                const index = column.cards.findIndex(c => c.id === card.id);
-                if (index !== -1) {
-                    column.cards.splice(index, 1);
-                    this.columns[targetColumnIndex].cards.push(card);
-                    break;
+            // for (let column of this.columns) {
+            //     const index = column.cards.findIndex(c => c.id === card.id);
+            //     if (index !== -1) {
+            //         column.cards.splice(index, 1);
+            //         this.columns[targetColumnIndex].cards.push(card);
+            //
+            //         // this.checkFirstColumnProgression(); //n
+            //
+            //         break;
+            //     }
+            // }
+        },
+        checkProgress() {
+            const col1 = this.columns[0];
+            const col2 = this.columns[1];
+            const col3 = this.columns[2];
+
+            const readyForThirdIndex = col2.cards.findIndex(card =>
+                card.items.length > 0 && card.items.every(item => item.completed)
+            );
+            if (readyForThirdIndex !== -1) {
+                const card = col2.cards.splice(readyForThirdIndex, 1)[0];
+                card.completedDate = new Date().toLocaleString();
+                col3.cards.push(card);
+            }
+
+            if (col2.cards.length < 5) {
+                const readyForSecondIndex = col1.cards.findIndex(card => {
+                    const completed = card.items.filter(i => i.completed).length;
+                    return (completed / card.items.length) >= 0.5;
+                });
+
+                if (readyForSecondIndex !== -1) {
+                    const card = col1.cards.splice(readyForSecondIndex, 1)[0];
+                    col2.cards.push(card);
                 }
             }
         }
     },
     template: `
         <div>
+<!--            <img src="../img/Freddy.png" alt="fazber" v-if="isBlocked">-->
             <div class="columns">
                 <note-column
                     v-for="(column, index) in columns"
-                    :is-blocked="index === 0 && isFirstColumnBlocked" 
+                    :is-blocked="index === 0 && isFirstColumnBlocked || index === 2" 
                     :key="index"
                     :column="column"
                     @update-card="updateCard"
